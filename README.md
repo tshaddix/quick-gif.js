@@ -1,6 +1,6 @@
 # quick-gif.js
 
-A simple and quick gif encoding library in JavaScript for the browser. Heavily inspired by [https://github.com/jnordberg/gif.js](https://github.com/jnordberg/gif.js).
+A simple and quick gif encoding library for the browser. Heavily inspired by [https://github.com/jnordberg/gif.js](https://github.com/jnordberg/gif.js).
 
 ## Installation
 
@@ -10,7 +10,7 @@ npm install --save quick-gif.js
 
 ## Usage
 
-This library is slightly different than other browser-based GIF encoders. Instead of collecting all the frames and waiting until the end of the media to start processing, `quick-gif.js` will start processing frames as soon as it is receiving them. This is where the `quick` comes from in the name.
+This library is slightly different than other browser-based GIF encoders. Instead of collecting all the frames and waiting until the end of the media to start processing, `quick-gif.js` will start processing frames as soon as it receives them. This is where the `quick` comes from in the name.
 
 ```js
 // import the GIF class
@@ -54,7 +54,7 @@ gif.on("finished", function(blob) {
 gif.start();
 ```
 
-You can see a working example in [/example]("./blob/master/example").
+You can see a working example in [/example](/example).
 
 ## Note
 
