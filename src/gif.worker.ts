@@ -1,4 +1,4 @@
-import GIFEncoder from "./util/GIFEncoder";
+import * as GIFEncoder from "./util/GIFEncoder";
 import { ITask, IFrameResult } from "./gif";
 
 function renderFrame(task: ITask) {
@@ -18,7 +18,7 @@ function renderFrame(task: ITask) {
   encoder.setDither(task.dither);
   encoder.addFrame(task.data);
 
-  if (frame.last) {
+  if (task.last) {
     encoder.finish();
   }
 
@@ -36,9 +36,9 @@ function renderFrame(task: ITask) {
 
   if (task.canTransfer) {
     const transfer = Array.from(result.pages).map(page => page.buffer);
-    self.postMessage(result, transfer);
+    self.postMessage(result, transfer as any);
   } else {
-    self.postMessage(result);
+    self.postMessage(result, undefined as any);
   }
 }
 

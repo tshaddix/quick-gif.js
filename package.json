@@ -9,7 +9,9 @@
       "./node_modules/.bin/webpack --config webpack.config.worker.js && ./node_modules/.bin/webpack",
     "format":
       "./node_modules/.bin/prettier es6 --write \"{src/**/*.{ts,js},webpack.config.js}\"",
-    "precommit": "./node_modules/.bin/lint-staged"
+    "precommit": "./node_modules/.bin/lint-staged",
+    "build-example":
+      "npm run build && ./node_modules/.bin/webpack --config example/webpack.config.js"
   },
   "lint-staged": {
     "*.{js,json,css,scss,md,ts}": ["npm run format", "git add"]
@@ -25,11 +27,13 @@
   },
   "homepage": "https://github.com/tshaddix/quick-gif.js#readme",
   "devDependencies": {
+    "@types/node": "^9.3.0",
     "awesome-typescript-loader": "^3.4.1",
     "husky": "^0.14.3",
     "lint-staged": "^6.0.1",
     "prettier": "^1.10.2",
     "raw-loader": "^0.5.1",
+    "source-map-loader": "^0.2.3",
     "typescript": "^2.6.2",
     "webpack": "^3.10.0"
   }

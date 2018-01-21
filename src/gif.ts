@@ -1,5 +1,5 @@
-import EventEmitter from "events";
-import browser from "util/browser";
+import { EventEmitter } from "events";
+import * as browser from "./util/browser.js";
 
 const workerSrc = require("raw-loader!./raw/gif.worker.js");
 
@@ -28,7 +28,7 @@ export interface IFrameOptions {
 }
 
 export interface IFrame extends IFrameOptions {
-  imageData: ImageData;
+  imageData: Uint8ClampedArray;
   transparent: string | null;
 }
 
@@ -44,7 +44,7 @@ export interface ITask {
   dither: string | null;
   repeat: RepeatTypes;
   canTransfer: boolean;
-  data: ImageData;
+  data: Uint8ClampedArray;
 }
 
 export interface IFrameResult extends ITask {
@@ -72,22 +72,21 @@ export class GIF extends EventEmitter {
   private isOpen: boolean = true;
   private activeWorkers: Worker[] = [];
   private freeWorkers: Worker[] = [];
-  private frames: IFrame = [];
+  private frames: IFrame[] = [];
   private nextFrame: number = 0;
   private finishedFrames: number = 0;
   private imageParts: (IFrameResult | null)[] = [];
   private workerURL: string | null = null;
 
-  constructor(width: number, height: number, options?: Partial<IOptions>) {
+  constructor(width: number, height: number, options: Partial<IOptions> = {}) {
     super();
 
     this.width = width;
     this.height = height;
 
-    this.options = {
-      ...this.options,
-      options
-    };
+    Object.keys(options).forEach(key => {
+      this.options[key] = options[key];
+    });
 
     // bind handlers / methods
     this.start = this.start.bind(this);
@@ -110,23 +109,24 @@ export class GIF extends EventEmitter {
     this.isOpen = true;
     this.nextFrame = 0;
     this.finishedFrames = 0;
-    this.workerURL = URL.getObjectURL(workerBlob);
+    this.workerURL = URL.createObjectURL(workerBlob);
     this.spawnWorkers();
   }
 
-  public addFrame(imageDate: ImageData) {
+  public addFrame(imageData: ImageData, frameOptions?: IFrameOptions) {
     if (!this.isOpen) {
       throw new Error("Can not add frame - the renderer has been closed");
     }
 
     const frame: IFrame = {
-      ...this.frameOptions,
+      ...this.options.frameOptions,
+      ...frameOptions,
       transparent: this.options.transparent,
-      imageData
+      imageData: imageData.data
     };
 
-    frames.push(frame);
-    imageParts.push(null);
+    this.frames.push(frame);
+    this.imageParts.push(null);
 
     this.render();
   }
@@ -166,11 +166,23 @@ export class GIF extends EventEmitter {
       return;
     }
 
-    const allFramesRendered = this.nextFrame > this.frames.length;
+    // we don't want to process the last frame
+    // in the queue if the renderer is still open.
+    // This is so we have the opportunity to mark
+    // the frame as the last frame for the encoder
+    // if we end up closing the renderer later on
+    // without adding more frames
+    if (this.isOpen && this.nextFrame === this.frames.length - 1) {
+      return;
+    }
+
+    console.log(this.finishedFrames, this.frames.length);
+
+    const allFramesRendered = this.finishedFrames === this.frames.length;
 
     if (!allFramesRendered) {
       this.renderNextFrame();
-    } else if (!this.isOpen) {
+    } else if (!this.isOpen && this.isRunning) {
       this.finishRendering();
     } else {
       return;
@@ -178,7 +190,7 @@ export class GIF extends EventEmitter {
   }
 
   private spawnWorkers(): number {
-    const numWorkers = this.workers - this.freeWorkers.length;
+    const numWorkers = this.options.workers - this.freeWorkers.length;
     let w = 0;
 
     while (w < numWorkers) {
@@ -203,6 +215,9 @@ export class GIF extends EventEmitter {
     this.finishedFrames++;
     this.imageParts[result.index] = result;
 
+    // clear out frame memory
+    this.frames[result.index] = null;
+
     this.render();
   }
 
@@ -213,12 +228,11 @@ export class GIF extends EventEmitter {
     }
 
     if (this.nextFrame >= this.frames.length) {
-      // error?
       return;
     }
 
     const frame = this.frames[this.nextFrame];
-    this.nextFrame++;
+    this.nextFrame += 1;
     const worker = this.freeWorkers.shift();
     const task: ITask = this.getTask(frame);
 
@@ -230,28 +244,32 @@ export class GIF extends EventEmitter {
   private finishRendering(): void {
     let len = 0;
 
-    this.imageParts.forEach(result => {
+    this.imageParts.forEach((result, i) => {
       len += (result.pages.length - 1) * result.pageSize + result.cursor;
+
+      if (i === this.imageParts.length - 1) {
+        len += result.pageSize - result.cursor;
+      }
     });
 
-    len += result.pageSize - result.cursor;
+    console.log(`rendering finished - filesize ${Math.round(len / 1000)}kb`);
 
     const data = new Uint8Array(len);
     let offset = 0;
 
-    this.imageParts.forEach(result => {
+    this.imageParts.forEach((result, j) => {
       result.pages.forEach((page, i) => {
         data.set(page, offset);
 
         if (i === result.pages.length - 1) {
-          offset == result.cursor;
+          offset += result.cursor;
         } else {
           offset += result.pageSize;
         }
       });
     });
 
-    const image = new Blob(data, { type: "image/gif" });
+    const image = new Blob([data] as any, { type: "image/gif" });
 
     this.emit("finished", image, data);
 
@@ -274,7 +292,7 @@ export class GIF extends EventEmitter {
       dither: options.dither,
       repeat: options.repeat,
       canTransfer: browser.name === "chrome",
-      data: frame.data
+      data: frame.imageData
     };
 
     return task;
