@@ -8,7 +8,7 @@ window.onload = function() {
   const width = 350;
   const height = 350;
 
-  const frameRate = 30;
+  const frameRate = 5;
 
   video.width = canvas.width = img.width = width;
   video.height = canvas.height = img.height = height;

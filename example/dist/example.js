@@ -85,7 +85,7 @@
         const width = 350;
         const height = 350;
 
-        const frameRate = 30;
+        const frameRate = 5;
 
         video.width = canvas.width = img.width = width;
         video.height = canvas.height = img.height = height;
@@ -360,7 +360,8 @@
                   ) {
                     return;
                   }
-                  console.log(this.finishedFrames, this.frames.length);
+                  // todo emit progess events
+                  // console.log(this.finishedFrames, this.frames.length);
                   const allFramesRendered =
                     this.finishedFrames === this.frames.length;
                   if (!allFramesRendered) {
@@ -423,9 +424,7 @@
                       len += result.pageSize - result.cursor;
                     }
                   });
-                  console.log(
-                    `rendering finished - filesize ${Math.round(len / 1000)}kb`
-                  );
+                  // console.log(`rendering finished - filesize ${Math.round(len / 1000)}kb`);
                   const data = new Uint8Array(len);
                   let offset = 0;
                   this.imageParts.forEach((result, j) => {
