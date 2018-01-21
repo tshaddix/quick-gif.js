@@ -11,7 +11,8 @@
       "./node_modules/.bin/prettier es6 --write \"{src/**/*.{ts,js},webpack.config.js}\"",
     "precommit": "./node_modules/.bin/lint-staged",
     "build-example":
-      "npm run build && ./node_modules/.bin/webpack --config example/webpack.config.js"
+      "npm run build && ./node_modules/.bin/webpack --config example/webpack.config.js",
+    "prepublish": "npm run build"
   },
   "lint-staged": {
     "*.{js,json,css,scss,md,ts}": ["npm run format", "git add"]
