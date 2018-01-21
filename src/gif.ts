@@ -176,7 +176,8 @@ export class GIF extends EventEmitter {
       return;
     }
 
-    console.log(this.finishedFrames, this.frames.length);
+    // todo emit progess events
+    // console.log(this.finishedFrames, this.frames.length);
 
     const allFramesRendered = this.finishedFrames === this.frames.length;
 
@@ -252,7 +253,7 @@ export class GIF extends EventEmitter {
       }
     });
 
-    console.log(`rendering finished - filesize ${Math.round(len / 1000)}kb`);
+    // console.log(`rendering finished - filesize ${Math.round(len / 1000)}kb`);
 
     const data = new Uint8Array(len);
     let offset = 0;
